@@ -79,5 +79,5 @@ export LD_LIBRARY_PATH_ARG
 docker build \
 	--build-arg POLICY --build-arg PLATFORM --build-arg BASEIMAGE \
 	--build-arg DEVTOOLSET_ROOTPATH --build-arg PREPEND_PATH --build-arg LD_LIBRARY_PATH_ARG \
-	--rm -t quay.io/pypa/${POLICY}_${PLATFORM}:${TRAVIS_COMMIT} \
+	--rm -t mayeut/manylinux:${POLICY}_${PLATFORM} \
 	-f docker/Dockerfile docker/
