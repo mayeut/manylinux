@@ -1,0 +1,40 @@
+name: Build and upload to PyPI
+
+on:
+  push:
+    tags:
+      - '**'
+    branches-ignore:
+      - "dependabot/**"
+  pull_request:
+
+jobs:
+  build_manylinux:
+    name: Build ${{ matrix.policy }}_${{ matrix.platform }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - policy: "manylinux2010"
+            platform: "i686"
+          - policy: "manylinux2010"
+            platform: "x86_64"
+          - policy: "manylinux2014"
+            platform: "i686"
+          - policy: "manylinux2014"
+            platform: "x86_64"
+          - policy: "manylinux2014"
+            platform: "aarch64"
+          - policy: "manylinux2014"
+            platform: "ppc64le"
+          - policy: "manylinux2014"
+            platform: "s390x"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.0.1
+
+      - name: Build manylinux image
+        run: PLATFORM=${{ matrix.platform }} POLICY=${{ matrix.policy }} TRAVIS_COMMIT=${{ github.sha }} ./build.sh
