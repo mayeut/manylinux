@@ -1,4 +1,4 @@
-name: Build and upload to PyPI
+name: Build
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build_manylinux:
-    name: Build ${{ matrix.policy }}_${{ matrix.platform }}
+    name: ${{ matrix.policy }}_${{ matrix.platform }}
     runs-on: ubuntu-20.04
     strategy:
       matrix:
