@@ -17,8 +17,8 @@ jobs:
     - uses: excitedleigh/setup-nox@v2.0.0
     - name: "Setup bot user"
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "manylinux-bot[bot]"
+        git config --global user.email "89297709+manylinux-bot[bot]@users.noreply.github.com"
     - name: "Run update native dependencies"
       run: nox --force-color -s update_native_dependencies
     - name: "Run update python dependencies"
