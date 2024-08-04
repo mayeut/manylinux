@@ -68,7 +68,7 @@ jobs:
 
       - name: Restore cache
         if: github.event_name != 'workflow_dispatch' || fromJSON(github.event.inputs.useCache)
-        uses: actions/cache/restore@v4
+        uses: buildjet/cache/restore@v4
         with:
           path: .buildx-cache-${{ matrix.policy }}_${{ matrix.platform }}/*
           key: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}
@@ -78,15 +78,13 @@ jobs:
 
       - name: Delete cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          KEY="buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}"
-          gh cache delete ${KEY} || true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: buildjet/cache-delete@v1
+        with:
+          cache_key: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}
 
       - name: Save cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/cache/save@v4
+        uses: buildjet/cache/save@v4
         with:
           path: .buildx-cache-${{ matrix.policy }}_${{ matrix.platform }}/*
           key: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}
