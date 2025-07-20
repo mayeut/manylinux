@@ -66,22 +66,50 @@ RUN export LIBXCRYPT_VERSION=4.4.38 && \
     export LIBXCRYPT_DOWNLOAD_URL=https://github.com/besser82/libxcrypt/releases/download && \
     manylinux-entrypoint /build_scripts/install-libxcrypt.sh
 
+
+FROM --platform=${BUILDPLATFORM} ubuntu:24.04 AS cross_compile
+ARG DEBIAN_FRONTEND=noninteractive
+ADD --chmod=755 https://apt.llvm.org/llvm.sh /tmp/llvm.sh
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
+    apt-get update && \
+    apt-get install --no-install-recommends -y \
+      ca-certificates \
+      curl \
+      gnupg \
+      hardlink \
+      make \
+      lsb-release \
+      software-properties-common \
+      wget && \
+    /tmp/llvm.sh 19
+COPY build_scripts/build_utils.sh /build_scripts/
+ARG POLICY
+ARG PLATFORM
+ENV AUDITWHEEL_POLICY=${POLICY} AUDITWHEEL_ARCH=${PLATFORM} AUDITWHEEL_PLAT=${POLICY}_${PLATFORM}
+ARG DEVTOOLSET_ROOTPATH
+ENV DEVTOOLSET_ROOTPATH=${DEVTOOLSET_ROOTPATH}
+
 FROM runtime_base AS build_base
 COPY build_scripts/install-build-packages.sh /build_scripts/
 RUN manylinux-entrypoint /build_scripts/install-build-packages.sh
 
 
-FROM build_base AS build_git
+FROM build_base AS build_git_native
 COPY build_scripts/build-curl.sh /build_scripts/
 RUN export CURL_ROOT=curl-8.15.0 && \
     export CURL_HASH=d85cfc79dc505ff800cb1d321a320183035011fa08cb301356425d86be8fc53c && \
     export CURL_DOWNLOAD_URL=https://curl.haxx.se/download && \
     manylinux-entrypoint /build_scripts/build-curl.sh
+
+FROM cross_compile AS build_git
 COPY build_scripts/build-git.sh /build_scripts/
-RUN export GIT_ROOT=git-2.50.1 && \
+RUN --mount=type=bind,target=/rootfs,from=build_git_native \
+    export GIT_ROOT=git-2.50.1 && \
     export GIT_HASH=522d1635f8b62b484b0ce24993818aad3cab8e11ebb57e196bda38a3140ea915 && \
     export GIT_DOWNLOAD_URL=https://www.kernel.org/pub/software/scm/git && \
-    manylinux-entrypoint /build_scripts/build-git.sh
+    /build_scripts/build-git.sh
+
 
 FROM build_base AS build_sqlite3
 COPY build_scripts/build-sqlite3.sh /build_scripts/

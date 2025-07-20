@@ -119,6 +119,7 @@ automake --version
 libtoolize --version
 patchelf --version
 git --version
+git clone https://github.com/pypa/manylinux.git /tmp/manylinux-git-clone
 cmake --version
 swig -version
 pipx run nox --version
