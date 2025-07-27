@@ -14,24 +14,25 @@ source "${MY_DIR}/build_utils.sh"
 # cross-compilation setup
 # TODO move this in a helper file
 case "${BASE_POLICY}-${AUDITWHEEL_ARCH}" in
-  manylinux-armv7l) TARGET_TRIPLET=arm-unknown-linux-gnueabihf;;
-  musllinux-armv7l) TARGET_TRIPLET=arm-unknown-linux-musleabihf;;
+	manylinux-armv7l) TARGET_TRIPLET=arm-unknown-linux-gnueabihf;;
+	musllinux-armv7l) TARGET_TRIPLET=arm-alpine-linux-musleabihf;;
 	manylinux-ppc64le) TARGET_TRIPLET=powerpc64le-none-linux-gnu;;
-	musllinux-ppc64le) TARGET_TRIPLET=powerpc64le-none-linux-musl;;
+	musllinux-ppc64le) TARGET_TRIPLET=powerpc64le-alpine-linux-musl;;
 	manylinux-*) TARGET_TRIPLET=${AUDITWHEEL_ARCH}-none-linux-gnu;;
-	musllinux-*) TARGET_TRIPLET=${AUDITWHEEL_ARCH}-none-linux-musl;;
+	musllinux-*) TARGET_TRIPLET=${AUDITWHEEL_ARCH}-alpine-linux-musl;;
 esac
 case "${AUDITWHEEL_ARCH}" in
-	riscv64) M_ARCH="-march=rva20u64";;
+	riscv64) M_ARCH="-march=rv64gc";;
 esac
 if [ "${DEVTOOLSET_ROOTPATH:-}" == "" ]; then
-	GCC_TOOLCHAIN="/rootfs"
+	GCC_TOOLCHAIN="/rootfs/usr"
 else
-	GCC_TOOLCHAIN="/rootfs${DEVTOOLSET_ROOTPATH}"
+	GCC_TOOLCHAIN="/rootfs${DEVTOOLSET_ROOTPATH}/usr"
 fi
+export STRIPBIN=llvm-strip-19
 
-touch /tmp/main.cpp
-clang-19 -fuse-ld=lld -v -target ${TARGET_TRIPLET} ${M_ARCH:-} --sysroot=/rootfs --gcc-toolchain=${GCC_TOOLCHAIN} /tmp/main.cpp
+# touch /tmp/main.cpp
+# clang-19 -fuse-ld=lld -v -target "${TARGET_TRIPLET}" ${M_ARCH:-} --sysroot=/rootfs "--gcc-toolchain=${GCC_TOOLCHAIN}" /tmp/main.cpp
 
 if [ "${BASE_POLICY}" == "musllinux" ]; then
 	export NO_REGEX=NeedsStartEnd
@@ -43,7 +44,6 @@ if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ]; then
 	# workaround build issue when openssl gets included
 	# git provides its own implementation of ctypes which conflicts
 	# with the one in CentOS 7. Just use the one from git.
-	# echo "" > /usr/include/ctype.h
 	mkdir -p /tmp/centos7/include
 	touch /tmp/centos7/include/ctype.h
 	MANYLINUX_CPPFLAGS="-I/tmp/centos7/include ${MANYLINUX_CPPFLAGS}"
@@ -56,11 +56,14 @@ if [ -d /rootfs/opt/_internal ]; then
 	if [ "${CURL_PREFIX}" != "" ]; then
 		export CURLDIR=${CURL_PREFIX}
 		CURL_LDFLAGS="-Wl,-rpath=${CURL_PREFIX:7}/lib -L${CURL_PREFIX}/lib $("${CURL_PREFIX}/bin/curl-config" --libs)"
-		export CURL_LDFLAGS
 		mkdir -p /manylinux-rootfs
 		cp -rf /rootfs/manylinux-rootfs/* /manylinux-rootfs
 	fi
+else
+	CURL_LDFLAGS="$(/rootfs/usr/bin/curl-config --libs)"
 fi
+export CURL_LDFLAGS
+
 # Install newest git
 check_var "${GIT_ROOT}"
 check_var "${GIT_HASH}"
@@ -83,6 +86,7 @@ make install prefix=/usr/local \
   LD="lld-19" \
   OBJCOPY="llvm-objcopy-19" \
   STRIP="llvm-strip-19" \
+  INSTALL="install --strip-program llvm-strip-19"
   CPPFLAGS="${MANYLINUX_CPPFLAGS}" \
   CFLAGS="${MANYLINUX_CFLAGS}" \
   CXXFLAGS="${MANYLINUX_CXXFLAGS}" \
