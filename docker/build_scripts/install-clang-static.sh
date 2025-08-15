@@ -32,7 +32,7 @@ for TOOLCHAIN_ARCH in aarch64 x86_64; do
 		aarch64) GOARCH=arm64;;
 		x86_64) GOARCH=amd64;;
 	esac
-	curl -fsSL https://github.com/dzbarsky/static-clang/releases/download/v19.1.6/linux_${GOARCH}_minimal.tar.xz | tar -C ${TOOLCHAIN_PATH} -xJ
+	curl -fsSL "https://github.com/dzbarsky/static-clang/releases/download/v19.1.6/linux_${GOARCH}_minimal.tar.xz" | tar -C ${TOOLCHAIN_PATH} -xJ
 	ln -s clang ${TOOLCHAIN_PATH}/bin/gcc
 	ln -s clang ${TOOLCHAIN_PATH}/bin/cc
 	ln -s clang-cpp ${TOOLCHAIN_PATH}/bin/cpp
