@@ -69,6 +69,11 @@ RUN export LIBXCRYPT_VERSION=4.4.38 && \
 FROM runtime_base AS build_base
 COPY build_scripts/install-build-packages.sh /build_scripts/
 RUN manylinux-entrypoint /build_scripts/install-build-packages.sh
+COPY build_scripts/install-clang-static.sh /build_scripts/
+RUN manylinux-entrypoint /build_scripts/install-clang-static.sh
+ARG BUILDARCH
+ARG MANYLINUX_BUILDARCH=${BUILDARCH}
+COPY manylinux-entrypoint-build /usr/local/bin/manylinux-entrypoint
 
 
 FROM build_base AS build_git
