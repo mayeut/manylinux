@@ -5,6 +5,9 @@ ARG PLATFORM=x86_64
 ARG DEVTOOLSET_ROOTPATH=/opt/rh/gcc-toolset-14/root
 ARG LD_LIBRARY_PATH_ARG=${DEVTOOLSET_ROOTPATH}/usr/lib64:${DEVTOOLSET_ROOTPATH}/usr/lib:${DEVTOOLSET_ROOTPATH}/usr/lib64/dyninst:${DEVTOOLSET_ROOTPATH}/usr/lib/dyninst
 ARG PREPEND_PATH=/usr/local/bin:${DEVTOOLSET_ROOTPATH}/usr/bin:
+ARG MANYLINUX_BUILDARCH=${BUILDARCH}
+
+FROM --platform=linux/${MANYLINUX_BUILDARCH} ghcr.io/mayeut/static-clang:latest AS static_clang
 
 FROM $BASEIMAGE AS runtime_base
 ARG POLICY
@@ -42,75 +45,84 @@ RUN manylinux-entrypoint /build_scripts/install-runtime-packages.sh && rm -rf /b
 
 COPY build_scripts/build_utils.sh /build_scripts/
 
+COPY build_scripts/install-clang-static.sh /build_scripts/
+RUN --mount=type=cache,target=/tmp/cross-compiler \
+    --mount=type=bind,target=/clang,from=static_clang \
+    cp -rf /clang/opt/clang/* /tmp/cross-compiler/ && \
+    manylinux-entrypoint /build_scripts/install-clang-static.sh /tmp/cross-compiler
+
 COPY build_scripts/install-autoconf.sh /build_scripts/
-RUN export AUTOCONF_ROOT=autoconf-2.72 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export AUTOCONF_ROOT=autoconf-2.72 && \
     export AUTOCONF_HASH=afb181a76e1ee72832f6581c0eddf8df032b83e2e0239ef79ebedc4467d92d6e && \
     export AUTOCONF_DOWNLOAD_URL=http://ftp.gnu.org/gnu/autoconf && \
-    manylinux-entrypoint /build_scripts/install-autoconf.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/install-autoconf.sh
 
 COPY build_scripts/install-automake.sh /build_scripts/
-RUN export AUTOMAKE_ROOT=automake-1.17 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export AUTOMAKE_ROOT=automake-1.17 && \
     export AUTOMAKE_HASH=397767d4db3018dd4440825b60c64258b636eaf6bf99ac8b0897f06c89310acd && \
     export AUTOMAKE_DOWNLOAD_URL=http://ftp.gnu.org/gnu/automake && \
-    manylinux-entrypoint /build_scripts/install-automake.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/install-automake.sh
 
 COPY build_scripts/install-libtool.sh /build_scripts/
-RUN export LIBTOOL_ROOT=libtool-2.5.3 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export LIBTOOL_ROOT=libtool-2.5.3 && \
     export LIBTOOL_HASH=9322bd8f6bc848fda3e385899dd1934957169652acef716d19d19d24053abb95 && \
     export LIBTOOL_DOWNLOAD_URL=http://ftp.gnu.org/gnu/libtool && \
-    manylinux-entrypoint /build_scripts/install-libtool.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/install-libtool.sh
 
 COPY build_scripts/install-libxcrypt.sh /build_scripts/
-RUN export LIBXCRYPT_VERSION=4.4.38 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export LIBXCRYPT_VERSION=4.4.38 && \
     export LIBXCRYPT_HASH=80304b9c306ea799327f01d9a7549bdb28317789182631f1b54f4511b4206dd6 && \
     export LIBXCRYPT_DOWNLOAD_URL=https://github.com/besser82/libxcrypt/releases/download && \
-    manylinux-entrypoint /build_scripts/install-libxcrypt.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/install-libxcrypt.sh
 
 FROM runtime_base AS build_base
 COPY build_scripts/install-build-packages.sh /build_scripts/
 RUN manylinux-entrypoint /build_scripts/install-build-packages.sh
-COPY build_scripts/install-clang-static.sh /build_scripts/
-RUN manylinux-entrypoint /build_scripts/install-clang-static.sh
-ARG BUILDARCH
-ARG MANYLINUX_BUILDARCH=${BUILDARCH}
-COPY manylinux-entrypoint-build /usr/local/bin/manylinux-entrypoint
 
 
 FROM build_base AS build_git
 COPY build_scripts/build-curl.sh /build_scripts/
-RUN export CURL_ROOT=curl-8.15.0 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export CURL_ROOT=curl-8.15.0 && \
     export CURL_HASH=d85cfc79dc505ff800cb1d321a320183035011fa08cb301356425d86be8fc53c && \
     export CURL_DOWNLOAD_URL=https://curl.haxx.se/download && \
-    manylinux-entrypoint /build_scripts/build-curl.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/build-curl.sh
 COPY build_scripts/build-git.sh /build_scripts/
-RUN export GIT_ROOT=git-2.50.1 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export GIT_ROOT=git-2.50.1 && \
     export GIT_HASH=522d1635f8b62b484b0ce24993818aad3cab8e11ebb57e196bda38a3140ea915 && \
     export GIT_DOWNLOAD_URL=https://www.kernel.org/pub/software/scm/git && \
-    manylinux-entrypoint /build_scripts/build-git.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/build-git.sh
 
 FROM build_base AS build_sqlite3
 COPY build_scripts/build-sqlite3.sh /build_scripts/
-RUN export SQLITE_AUTOCONF_ROOT=sqlite-autoconf-3500400 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export SQLITE_AUTOCONF_ROOT=sqlite-autoconf-3500400 && \
     export SQLITE_AUTOCONF_HASH=a3db587a1b92ee5ddac2f66b3edb41b26f9c867275782d46c3a088977d6a5b18 && \
     export SQLITE_AUTOCONF_DOWNLOAD_URL=https://www.sqlite.org/2025 && \
-    manylinux-entrypoint /build_scripts/build-sqlite3.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/build-sqlite3.sh
 
 FROM build_base AS build_tcl_tk
 COPY build_scripts/build-tcltk.sh /build_scripts/
-RUN export TCL_ROOT=tcl8.6.16 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export TCL_ROOT=tcl8.6.16 && \
     export TCL_HASH=91cb8fa61771c63c262efb553059b7c7ad6757afa5857af6265e4b0bdc2a14a5 && \
     export TCL_DOWNLOAD_URL=https://prdownloads.sourceforge.net/tcl && \
     export TK_ROOT=tk8.6.16 && \
     export TK_HASH=be9f94d3575d4b3099d84bc3c10de8994df2d7aa405208173c709cc404a7e5fe && \
-    manylinux-entrypoint /build_scripts/build-tcltk.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/build-tcltk.sh
 
 FROM build_base AS build_mpdecimal
 COPY build_scripts/build-mpdecimal.sh /build_scripts/
-RUN export MPDECIMAL_ROOT=mpdecimal-4.0.0 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export MPDECIMAL_ROOT=mpdecimal-4.0.0 && \
     export MPDECIMAL_HASH=942445c3245b22730fd41a67a7c5c231d11cb1b9936b9c0f76334fb7d0b4468c && \
     export MPDECIMAL_DOWNLOAD_URL=https://www.bytereef.org/software/mpdecimal/releases && \
-    manylinux-entrypoint /build_scripts/build-mpdecimal.sh
-
+    /tmp/cross-compiler/entrypoint /build_scripts/build-mpdecimal.sh
 
 FROM --platform=${BUILDPLATFORM} ghcr.io/sigstore/cosign/cosign:v2.5.0 AS cosign-bin
 
@@ -120,39 +132,49 @@ COPY --from=build_mpdecimal /manylinux-buildfs /
 COPY --from=build_sqlite3 /manylinux-buildfs /
 RUN if command -v apk >/dev/null 2>&1; then ldconfig /; else ldconfig; fi
 COPY build_scripts/build-openssl.sh /build_scripts/
-RUN export OPENSSL_ROOT=openssl-3.5.2 && \
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    export OPENSSL_ROOT=openssl-3.5.2 && \
     export OPENSSL_HASH=c53a47e5e441c930c3928cf7bf6fb00e5d129b630e0aa873b08258656e7345ec && \
     export OPENSSL_DOWNLOAD_URL=https://github.com/openssl/openssl/releases/download/${OPENSSL_ROOT} && \
-    manylinux-entrypoint /build_scripts/build-openssl.sh
+    /tmp/cross-compiler/entrypoint /build_scripts/build-openssl.sh
 COPY --from=cosign-bin /ko-app/cosign /usr/local/bin/cosign
 COPY build_scripts/build-cpython.sh /build_scripts/
 
 FROM build_cpython AS build_cpython38
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh lukasz@langa.pl https://github.com/login/oauth 3.8.20
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh lukasz@langa.pl https://github.com/login/oauth 3.8.20
 
 FROM build_cpython AS build_cpython39
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh lukasz@langa.pl https://github.com/login/oauth 3.9.23
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh lukasz@langa.pl https://github.com/login/oauth 3.9.23
 
 FROM build_cpython AS build_cpython310
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh pablogsal@python.org https://accounts.google.com 3.10.18
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh pablogsal@python.org https://accounts.google.com 3.10.18
 
 FROM build_cpython AS build_cpython311
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh pablogsal@python.org https://accounts.google.com 3.11.13
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh pablogsal@python.org https://accounts.google.com 3.11.13
 
 FROM build_cpython AS build_cpython312
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh thomas@python.org https://accounts.google.com 3.12.11
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh thomas@python.org https://accounts.google.com 3.12.11
 
 FROM build_cpython AS build_cpython313
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh thomas@python.org https://accounts.google.com 3.13.7
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh thomas@python.org https://accounts.google.com 3.13.7
 
 FROM build_cpython AS build_cpython313_nogil
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh thomas@python.org https://accounts.google.com 3.13.7 nogil
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh thomas@python.org https://accounts.google.com 3.13.7 nogil
 
 FROM build_cpython AS build_cpython314
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh hugo@python.org https://github.com/login/oauth 3.14.0rc2
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh hugo@python.org https://github.com/login/oauth 3.14.0rc2
 
 FROM build_cpython AS build_cpython314_nogil
-RUN manylinux-entrypoint /build_scripts/build-cpython.sh hugo@python.org https://github.com/login/oauth 3.14.0rc2 nogil
+RUN --mount=type=cache,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /build_scripts/build-cpython.sh hugo@python.org https://github.com/login/oauth 3.14.0rc2 nogil
 
 FROM runtime_base
 COPY --from=build_tcl_tk /manylinux-rootfs /
