@@ -17,8 +17,6 @@ else
 	export BASE_POLICY=manylinux
 	if command -v dnf >/dev/null 2>&1; then
 		PACKAGE_MANAGER=dnf
-	elif command -v yum >/dev/null 2>&1; then
-		PACKAGE_MANAGER=yum
 	elif command -v apt-get >/dev/null 2>&1; then
 		PACKAGE_MANAGER=apt
 	else
@@ -74,9 +72,7 @@ function clean_pyc {
 }
 
 function manylinux_pkg_install {
-	if [ "${PACKAGE_MANAGER}" = "yum" ]; then
-		yum -y install "$@"
-	elif [ "${PACKAGE_MANAGER}" = "dnf" ]; then
+	if [ "${PACKAGE_MANAGER}" = "dnf" ]; then
 		dnf -y install --allowerasing "$@"
 	elif  [ "${PACKAGE_MANAGER}" = "apt" ]; then
 		DEBIAN_FRONTEND=noninteractive apt-get update -qq
@@ -89,9 +85,7 @@ function manylinux_pkg_install {
 }
 
 function manylinux_pkg_remove {
-	if [ "${PACKAGE_MANAGER}" = "yum" ]; then
-		yum erase -y "$@"
-	elif [ "${PACKAGE_MANAGER}" = "dnf" ];then
+	if [ "${PACKAGE_MANAGER}" = "dnf" ];then
 		dnf erase -y "$@"
 	elif [ "${PACKAGE_MANAGER}" = "apt" ];then
 		DEBIAN_FRONTEND=noninteractive apt-get remove -y "$@"
@@ -103,16 +97,7 @@ function manylinux_pkg_remove {
 }
 
 function manylinux_pkg_clean {
-	if [ "${PACKAGE_MANAGER}" = "yum" ]; then
-		yum clean all
-		rm -rf /var/cache/yum
-		if [ -f /var/log/anaconda/journal.log ]; then
-			rm /var/log/anaconda/journal.log
-		fi
-		if [ -d /var/lib/yum/history ]; then
-			rm -rf /var/lib/yum/history
-		fi
-	elif [ "${PACKAGE_MANAGER}" = "dnf" ]; then
+	if [ "${PACKAGE_MANAGER}" = "dnf" ]; then
 		dnf clean all
 		rm -rf /var/cache/dnf
 	elif  [ "${PACKAGE_MANAGER}" = "apt" ]; then

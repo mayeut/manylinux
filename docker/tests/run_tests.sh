@@ -38,21 +38,11 @@ if [ "${AUDITWHEEL_POLICY:0:10}" == "musllinux_" ]; then
 	EXPECTED_PYTHON_COUNT_ALL=9
 else
 	if [ "${AUDITWHEEL_ARCH}" == "x86_64" ] || [ "${AUDITWHEEL_ARCH}" == "aarch64" ]; then
-		if [ "${AUDITWHEEL_POLICY:0:13}" == "manylinux2014" ]; then
-			EXPECTED_PYTHON_COUNT=10
-			EXPECTED_PYTHON_COUNT_ALL=14
-		else
-			EXPECTED_PYTHON_COUNT=12
-			EXPECTED_PYTHON_COUNT_ALL=17
-		fi
+		EXPECTED_PYTHON_COUNT=12
+		EXPECTED_PYTHON_COUNT_ALL=17
 	elif [ "${AUDITWHEEL_ARCH}" == "i686" ]; then
-		if [ "${AUDITWHEEL_POLICY:0:13}" == "manylinux2014" ]; then
-		  EXPECTED_PYTHON_COUNT=10
-		  EXPECTED_PYTHON_COUNT_ALL=12
-		else
-			EXPECTED_PYTHON_COUNT=12
-			EXPECTED_PYTHON_COUNT_ALL=14
-		fi
+		EXPECTED_PYTHON_COUNT=12
+		EXPECTED_PYTHON_COUNT_ALL=14
 	else
 		EXPECTED_PYTHON_COUNT=9
 		EXPECTED_PYTHON_COUNT_ALL=9
@@ -114,16 +104,7 @@ pipx install nox
 nox --version
 tar --version | grep "GNU tar"
 
-# check libcrypt.so.1 can be loaded by some system packages,
-# as LD_LIBRARY_PATH might not be enough.
-# c.f. https://github.com/pypa/manylinux/issues/1022
-if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ]; then
-	yum -y install openssh-clients
-	eval "$(ssh-agent)"
-	eval "$(ssh-agent -k)"
-fi
-
-if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ] || [ "${AUDITWHEEL_POLICY}" == "manylinux_2_28" ] || [ "${AUDITWHEEL_POLICY}" == "musllinux_1_2" ]; then
+if [ "${AUDITWHEEL_POLICY}" == "manylinux_2_28" ] || [ "${AUDITWHEEL_POLICY}" == "musllinux_1_2" ]; then
 	# we stopped installing sqlite3 after manylinux_2_28 / musllinux_1_2 & this is becoming an internal detail
 	/opt/_internal/sqlite3/bin/sqlite3 --version
 	# sqlite compilation tests, intended to ensure appropriate headers, pkg_config, etc.

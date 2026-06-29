@@ -70,15 +70,10 @@ def _update_with_root(tool, dry_run):
         "automake": "autotools-mirror/automake",
         "libtool": "autotools-mirror/libtool",
         "git": "git/git",
-        "openssl": "openssl/openssl",
-        "curl": "curl/curl",
     }
-    major = {
-        "openssl": "3.5",
-    }
+    major = {}
     only = {
         "autoconf": r"~v?[0-9]+\.[0-9]+(\.[0-9]+)?$",
-        "openssl": "3.5.",
     }
     exclude = {
         "libtool": r"~2\.5\.[0-2]$",  # pre-release
@@ -149,11 +144,9 @@ def _update_sqlite(dry_run):
 
 def _update_with_gh(tool, dry_run):
     repo = {
-        "libxcrypt": "besser82/libxcrypt",
         "zstd": "facebook/zstd",
     }
     extension = {
-        "libxcrypt": "tar.xz",
         "zstd": "tar.gz",
     }
     lines = DOCKERFILE.read_text().splitlines()
@@ -173,35 +166,6 @@ def _update_with_gh(tool, dry_run):
             lines[i + 0] = f"    export {tool.upper()}_VERSION={latest_version} && \\"
             lines[i + 1] = f"    export {tool.upper()}_HASH={sha256} && \\"
             message = f"Bump {tool} {current_version} → {latest_version}"
-            print(message)
-            if not dry_run:
-                DOCKERFILE.write_text("\n".join(lines) + "\n")
-                subprocess.check_call(["git", "commit", "-am", message])
-        break
-
-
-def _update_tcltk(dry_run):
-    lines = DOCKERFILE.read_text().splitlines()
-    re_ = re.compile("^    export TCL_ROOT=tcl(?P<version>\\S+) && \\\\$")
-    for i in range(len(lines)):
-        match = re_.match(lines[i])
-        if match is None:
-            continue
-        current_version = Version(match["version"])
-        latest_version = latest("tcltk/tcl", only="core-8-6-")
-        if latest_version > current_version and str(latest_version) != "8.6.15":
-            root = f"tcl{latest_version}"
-            url = re.match("^    export TCL_DOWNLOAD_URL=(?P<url>\\S+) && \\\\$", lines[i + 2])[
-                "url"
-            ]
-            sha256 = _sha256(f"{url}/{root}-src.tar.gz")
-            lines[i + 0] = f"    export TCL_ROOT={root} && \\"
-            lines[i + 1] = f"    export TCL_HASH={sha256} && \\"
-            root = f"tk{latest_version}"
-            sha256 = _sha256(f"{url}/{root}-src.tar.gz")
-            lines[i + 3] = f"    export TK_ROOT={root} && \\"
-            lines[i + 4] = f"    export TK_HASH={sha256} && \\"
-            message = f"Bump Tcl/Tk {current_version} → {latest_version}"
             print(message)
             if not dry_run:
                 DOCKERFILE.write_text("\n".join(lines) + "\n")
@@ -261,13 +225,12 @@ def main():
     _update_cpython(args.dry_run)
     _update_git_lfs(args.dry_run)
     _update_sqlite(args.dry_run)
-    _update_tcltk(args.dry_run)
-    for tool in ["autoconf", "automake", "libtool", "git", "openssl", "curl"]:
+    for tool in ["autoconf", "automake", "libtool", "git"]:
         try:
             _update_with_root(tool, args.dry_run)
         except Exception as e:  # noqa: BLE001
             print(f"::warning::update: {e}\n", file=sys.stderr)
-    for tool in ["libxcrypt", "zstd"]:
+    for tool in ["zstd"]:
         try:
             _update_with_gh(tool, args.dry_run)
         except Exception as e:  # noqa: BLE001

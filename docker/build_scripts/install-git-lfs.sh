@@ -36,9 +36,7 @@ fetch_source "${GIT_LFS_SHA256}" "https://github.com/git-lfs/git-lfs/releases/do
 fetch_source "${GIT_LFS_ARCHIVE}" "https://github.com/git-lfs/git-lfs/releases/download/v${GIT_LFS_VERSION}" skip-hash
 
 gpg -d "${GIT_LFS_SHA256}" | grep "${GIT_LFS_ARCHIVE}" | sha256sum -c
-if [ "${AUDITWHEEL_POLICY}" != "manylinux2014" ]; then
-	gpgconf --kill gpg-agent
-fi
+gpgconf --kill gpg-agent
 
 mkdir git-lfs
 tar -C git-lfs -xf "${GIT_LFS_ARCHIVE}" --strip-components 1

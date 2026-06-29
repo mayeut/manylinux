@@ -44,7 +44,6 @@ function manylinux_pkg_version_ge {
 
 function manylinux_pkg_update {
 	case "${PACKAGE_MANAGER}" in
-		yum) yum update -y "$@";;
 		dnf) dnf upgrade -y "$@";;
 		apt)
 			DEBIAN_FRONTEND=noninteractive apt-get update -qq
@@ -57,7 +56,6 @@ function manylinux_pkg_update {
 
 EOL=0
 case "${AUDITWHEEL_POLICY}" in
-	manylinux2014) MIN_VERSION="2023.2.60_v7.0.306-72.el7_9"; EOL=1;;
 	manylinux_2_28) MIN_VERSION="2026.2.92_v9.0.319-81.3.el8_10";;
 	manylinux_2_31) MIN_VERSION="20240203~20.04.1"; EOL=1;;
 	manylinux_2_34) MIN_VERSION="2026.2.92_v9.0.319-90.3.el9_8";;

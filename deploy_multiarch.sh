@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-IMAGES=(manylinux2014 manylinux_2_28 manylinux_2_31 manylinux_2_34 manylinux_2_35 manylinux_2_39 musllinux_1_2)
+IMAGES=(manylinux_2_28 manylinux_2_31 manylinux_2_34 manylinux_2_35 manylinux_2_39 musllinux_1_2)
 EXIT_CODE=0
 
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io

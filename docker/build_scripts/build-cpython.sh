@@ -59,11 +59,6 @@ if [ "${4:-}" == "nogil" ]; then
 	CONFIGURE_ARGS+=(--disable-gil)
 fi
 
-if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ] ; then
-	# Python 3.11+
-	export TCLTK_LIBS="-L/usr/local/lib -ltk8.6 -ltcl8.6"
-fi
-
 if [ "${BASE_POLICY}_${AUDITWHEEL_ARCH}" == "manylinux_armv7l" ]; then
 	CONFIGURE_ARGS+=(--build=armv7l-unknown-linux-gnueabihf)
 elif [ "${BASE_POLICY}_${AUDITWHEEL_ARCH}" == "musllinux_armv7l" ]; then
@@ -74,15 +69,6 @@ case "${CPYTHON_VERSION}" in
 	3.9.*|3.10.*) sed -i "s|/usr/local/include/sqlite3|/opt/_internal/sqlite3/include|g ; s|sqlite_extra_link_args = ()|sqlite_extra_link_args = ('-Wl,-rpath=/opt/_internal/sqlite3/lib',)|g" setup.py;;
 	*) ;;
 esac
-
-OPENSSL_PREFIX=$(find /opt/_internal -maxdepth 1 -name 'openssl*')
-if [ "${OPENSSL_PREFIX}" != "" ]; then
-	CONFIGURE_ARGS+=("--with-openssl=${OPENSSL_PREFIX}")
-	case "${CPYTHON_VERSION}" in
-		3.9.*) export LDFLAGS_EXTRA="-Wl,-rpath,${OPENSSL_PREFIX}/lib";;
-		*) CONFIGURE_ARGS+=(--with-openssl-rpath=auto);;
-	esac
-fi
 
 # gcc: error: unrecognized command-line option ‘-mno-omit-leaf-frame-pointer’
 # https://github.com/pypa/manylinux/issues/1938
@@ -127,10 +113,6 @@ make > /dev/null
 make install > /dev/null
 popd
 rm -rf "Python-${CPYTHON_VERSION}" "Python-${CPYTHON_VERSION}.tar.xz" "Python-${CPYTHON_VERSION}.tar.xz.sigstore"
-
-if [ "${OPENSSL_PREFIX}" != "" ]; then
-	rm -rf "${OPENSSL_PREFIX:?}/bin" "${OPENSSL_PREFIX}/include" "${OPENSSL_PREFIX}/lib/pkgconfig" "${OPENSSL_PREFIX}/lib/*.so"
-fi
 
 # We do not need precompiled .pyc and .pyo files.
 clean_pyc "${PREFIX}"

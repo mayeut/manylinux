@@ -32,8 +32,6 @@ An overview of distros per glibc version is available at `pep600_compliance <htt
 
 The manylinux project supports:
 
-- ``manylinux2014`` images for ``x86_64``, ``i686``, ``aarch64``, ``ppc64le`` and ``s390x``.
-
 - ``manylinux_2_28`` images for ``x86_64``, ``i686``, ``aarch64``, ``ppc64le`` and ``s390x``.
 
 - ``manylinux_2_31`` images for ``armv7l``.
@@ -224,8 +222,8 @@ distros using glibc 2.28 or later, including:
 - CentOS/RHEL 8+
 
 
-manylinux2014 (CentOS 7 based, glibc 2.17)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+manylinux2014 (CentOS 7 based, glibc 2.17) - EOL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Toolchain: GCC 10
 

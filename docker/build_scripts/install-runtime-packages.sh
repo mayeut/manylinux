@@ -46,14 +46,8 @@ fi
 
 # RUNTIME_DEPS: Runtime dependencies. c.f. install-build-packages.sh
 if [ "${OS_ID_LIKE}" == "rhel" ]; then
-	RUNTIME_DEPS=(zlib bzip2 expat ncurses readline gdbm xz openssl libcurl uuid libffi)
-	if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ]; then
-		RUNTIME_DEPS+=(libXft)
-		RUNTIME_DEPS+=(keyutils-libs libkadm5 libcom_err libidn)  # we rebuild curl
-	elif [ "${AUDITWHEEL_POLICY}" == "manylinux_2_28" ]; then
-		RUNTIME_DEPS+=(tk)
-	else
-		RUNTIME_DEPS+=(tk)
+	RUNTIME_DEPS=(zlib bzip2 expat ncurses readline gdbm xz openssl libcurl uuid libffi tk)
+	if [ "${AUDITWHEEL_POLICY}" != "manylinux_2_28" ]; then
 		# for graalpy
 		RUNTIME_DEPS+=(libxcrypt-compat)
 	fi
@@ -72,49 +66,7 @@ else
 fi
 
 BASE_TOOLS=(autoconf automake bison bzip2 ca-certificates curl diffutils file make patch unzip)
-if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ]; then
-	BASE_TOOLS+=(hardlink hostname which)
-	# See https://unix.stackexchange.com/questions/41784/can-yum-express-a-preference-for-x86-64-over-i386-packages
-	echo "multilib_policy=best" >> /etc/yum.conf
-	# Error out if requested packages do not exist
-	echo "skip_missing_names_on_install=False" >> /etc/yum.conf
-	# Make sure that locale will not be removed
-	sed -i '/^override_install_langs=/d' /etc/yum.conf
-
-	# we don't need those in the first place & updates are taking a lot of space on aarch64
-	# the intent is in the upstream image creation but it got messed up at some point
-	# https://github.com/CentOS/sig-cloud-instance-build/blob/98aa8c6f0290feeb94d86b52c561d70eabc7d942/docker/centos-7-x86_64.ks#L43
-	if rpm -q kernel-modules; then
-		rpm -e kernel-modules
-	fi
-	if rpm -q kernel-core; then
-		rpm -e --noscripts kernel-core
-	fi
-	if rpm -q bind-license; then
-		yum -y erase bind-license qemu-guest-agent
-	fi
-	fixup-mirrors
-	yum -y update
-	fixup-mirrors
-	yum -y install yum-utils curl
-	yum-config-manager --enable extras
-	TOOLCHAIN_DEPS=(devtoolset-10-binutils devtoolset-10-gcc devtoolset-10-gcc-c++ devtoolset-10-gcc-gfortran devtoolset-10-libatomic-devel)
-	if [ "${AUDITWHEEL_ARCH}" == "x86_64" ]; then
-		# Software collection (for devtoolset-10)
-		yum -y install centos-release-scl-rh
-		if ! rpm -q epel-release-7-14.noarch; then
-			# EPEL support (for yasm)
-			yum -y install https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm
-		fi
-	elif [ "${AUDITWHEEL_ARCH}" == "aarch64" ] || [ "${AUDITWHEEL_ARCH}" == "ppc64le" ] || [ "${AUDITWHEEL_ARCH}" == "s390x" ]; then
-		# Software collection (for devtoolset-10)
-		yum -y install centos-release-scl-rh
-	elif [ "${AUDITWHEEL_ARCH}" == "i686" ]; then
-		# Install mayeut/devtoolset-10 repo to get devtoolset-10
-		curl -fsSLo /etc/yum.repos.d/mayeut-devtoolset-10.repo https://copr.fedorainfracloud.org/coprs/mayeut/devtoolset-10/repo/custom-1/mayeut-devtoolset-10-custom-1.repo
-	fi
-	fixup-mirrors
-elif [ "${OS_ID_LIKE}" == "rhel" ]; then
+if [ "${OS_ID_LIKE}" == "rhel" ]; then
 	BASE_TOOLS+=(glibc-locale-source glibc-langpack-en gnupg2 gzip hardlink hostname libcurl libxcrypt tar which)
 	if [ "${AUDITWHEEL_ARCH}" != "loongarch64" ]; then
 		BASE_TOOLS+=(libnsl)

@@ -84,35 +84,13 @@ RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
     export LIBTOOL_DOWNLOAD_URL=https://ftpmirror.gnu.org/gnu/libtool && \
     /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/install-libtool.sh
 
-COPY build_scripts/install-libxcrypt.sh /opt/_internal/build_scripts/
-RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
-    export LIBXCRYPT_VERSION=4.5.2 && \
-    export LIBXCRYPT_HASH=71513a31c01a428bccd5367a32fd95f115d6dac50fb5b60c779d5c7942aec071 && \
-    export LIBXCRYPT_DOWNLOAD_URL=https://github.com/besser82/libxcrypt/releases/download && \
-    /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/install-libxcrypt.sh
-
 
 FROM runtime_base AS build_base
 COPY build_scripts/install-build-packages.sh /opt/_internal/build_scripts/
 RUN manylinux-entrypoint /opt/_internal/build_scripts/install-build-packages.sh
 
 
-FROM build_base AS build_base_openssl
-COPY build_scripts/build-openssl.sh /opt/_internal/build_scripts/
-RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
-    export OPENSSL_ROOT=openssl-3.5.9 && \
-    export OPENSSL_HASH=603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a && \
-    export OPENSSL_DOWNLOAD_URL=https://github.com/openssl/openssl/releases/download/${OPENSSL_ROOT} && \
-    /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/build-openssl.sh
-
-
-FROM build_base_openssl AS build_git
-COPY build_scripts/build-curl.sh /opt/_internal/build_scripts/
-RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
-    export CURL_ROOT=curl-8.23.0 && \
-    export CURL_HASH=e3de77cfa6367083c776a26647fc9f633b538c06c3baa73d931a252ac8f72b49 && \
-    export CURL_DOWNLOAD_URL=https://curl.haxx.se/download && \
-    /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/build-curl.sh
+FROM build_base AS build_git
 COPY build_scripts/build-git.sh /opt/_internal/build_scripts/
 RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
     export GIT_ROOT=git-2.56.1 && \
@@ -128,17 +106,6 @@ RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
     export SQLITE_AUTOCONF_HASH=926ef8d3eab93fbf6e06011901273eec076b25594a4e1cdadd50c987f4f6d64e && \
     export SQLITE_AUTOCONF_DOWNLOAD_URL=https://www.sqlite.org/2026 && \
     /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/build-sqlite3.sh
-
-
-FROM build_base AS build_tcl_tk
-COPY build_scripts/build-tcltk.sh /opt/_internal/build_scripts/
-RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
-    export TCL_ROOT=tcl8.6.18 && \
-    export TCL_HASH=14f9af32b1767ff718477a8f974ad03c34341097e6b43f4ce54644ee974e268e && \
-    export TCL_DOWNLOAD_URL=https://prdownloads.sourceforge.net/tcl && \
-    export TK_ROOT=tk8.6.18 && \
-    export TK_HASH=95cd528a80f5e4bdb557af9b14a7197d6860793a3894e25e7c9fad2ed05d4c3c && \
-    /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/build-tcltk.sh
 
 
 FROM build_base AS build_mpdecimal
@@ -162,8 +129,7 @@ RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
 FROM --platform=${BUILDPLATFORM} ghcr.io/sigstore/cosign/cosign:v${MANYLINUX_COSIGN_VERSION} AS cosign-bin
 
 
-FROM build_base_openssl AS build_cpython
-COPY --from=build_tcl_tk /manylinux-buildfs /
+FROM build_base AS build_cpython
 COPY --from=build_mpdecimal /manylinux-buildfs /
 COPY --from=build_zstd /manylinux-buildfs /
 COPY --from=build_sqlite3 /manylinux-buildfs /
@@ -219,7 +185,6 @@ RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
 
 
 FROM runtime_base
-COPY --from=build_tcl_tk /manylinux-rootfs /
 COPY --from=build_mpdecimal /manylinux-rootfs /
 COPY --from=build_zstd /manylinux-rootfs /
 COPY --from=build_sqlite3 /manylinux-rootfs /
@@ -236,7 +201,6 @@ RUN --mount=type=bind,target=/build_cpython39,from=build_cpython39 \
     --mount=type=bind,target=/build_cpython315_nogil,from=build_cpython315_nogil \
     mkdir -p /opt/_internal && \
     cp -rf /build_cpython*/opt/_internal/cpython* /opt/_internal/ && \
-    if test -n "$(find /build_cpython315/opt/_internal -maxdepth 1 -name 'openssl*' -print -quit)"; then cp -rf /build_cpython315/opt/_internal/openssl* /opt/_internal/; fi && \
     manylinux-entrypoint /opt/_internal/build_scripts/finalize.sh \
       pp311-pypy311_pp73 \
       pp311-pypy311_pp80 \

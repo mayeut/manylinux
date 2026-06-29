@@ -15,32 +15,6 @@ if [ "${BASE_POLICY}" == "musllinux" ]; then
 	export NO_REGEX=NeedsStartEnd
 fi
 
-if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ]; then
-	export NO_UNCOMPRESS2=1
-	CSPRNG_METHOD=urandom
-	# workaround build issue when openssl gets included
-	# git provides its own implementation of ctypes which conflicts
-	# with the one in CentOS 7. Just use the one from git.
-	echo "" > /usr/include/ctype.h
-else
-	CSPRNG_METHOD=getrandom
-fi
-
-if [ -d /opt/_internal ]; then
-	CURL_PREFIX=$(find /opt/_internal -maxdepth 1 -name 'curl-*')
-	if [ "${CURL_PREFIX}" != "" ]; then
-		export CURLDIR=${CURL_PREFIX}
-		CURL_LDFLAGS="-Wl,-rpath=${CURL_PREFIX}/lib $("${CURL_PREFIX}/bin/curl-config" --libs)"
-		export CURL_LDFLAGS
-	fi
-	OPENSSL_PREFIX=$(find /opt/_internal -maxdepth 1 -name 'openssl-*')
-	if [ "${OPENSSL_PREFIX}" != "" ]; then
-		test -d "${OPENSSL_PREFIX}/lib"
-		export OPENSSLDIR=${OPENSSL_PREFIX}
-		export OPENSSL_LINK="-Wl,-rpath=${OPENSSL_PREFIX}/lib -L${OPENSSL_PREFIX}/lib"
-	fi
-fi
-
 # Install newest git
 
 fetch_source "${GIT_ROOT}.tar.gz" "${GIT_DOWNLOAD_URL}" "${GIT_HASH}"
@@ -54,7 +28,7 @@ make install \
 	INSTALL_SYMLINKS=1 \
 	INSTALL_STRIP=-s \
 	DESTDIR=/manylinux-rootfs \
-	CSPRNG_METHOD=${CSPRNG_METHOD} \
+	CSPRNG_METHOD=getrandom \
 	CPPFLAGS="${MANYLINUX_CPPFLAGS}" \
 	CFLAGS="${MANYLINUX_CFLAGS}" \
 	CXXFLAGS="${MANYLINUX_CXXFLAGS}" \

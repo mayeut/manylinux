@@ -12,14 +12,7 @@ MY_DIR=$(dirname "${BASH_SOURCE[0]}")
 source "${MY_DIR}/build_utils.sh"
 
 fixup-mirrors
-if [ "${PACKAGE_MANAGER}" == "yum" ]; then
-	yum -y update
-	if ! localedef -V &> /dev/null; then
-		# somebody messed up glibc-common package to squeeze image size, reinstall the package
-		fixup-mirrors
-		yum -y reinstall glibc-common
-	fi
-elif [ "${PACKAGE_MANAGER}" == "dnf" ]; then
+if [ "${PACKAGE_MANAGER}" == "dnf" ]; then
 	dnf -y upgrade --nobest
 elif [ "${PACKAGE_MANAGER}" == "apt" ]; then
 	DEBIAN_FRONTEND=noninteractive apt-get update -qq
@@ -45,10 +38,6 @@ if [ "${OS_ID_LIKE}" == "rhel" ] || [ "${OS_ID_LIKE}" == "debian" ]; then
 		if [ "${OS_ID_LIKE}" == "rhel" ]; then
 			if localedef --list-archive | grep -sq -v -i ^en_US.utf8; then
 				localedef --list-archive | grep -v -i ^en_US.utf8 | xargs localedef --delete-from-archive
-			fi
-			if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ]; then
-				mv -f "${LOCALE_ARCHIVE}" "${LOCALE_ARCHIVE}.tmpl"
-				build-locale-archive --install-langs="en_US.utf8"
 			fi
 		elif [ "${OS_ID_LIKE}" == "debian" ]; then
 			update-locale LANG=en_US.UTF-8
@@ -83,11 +72,6 @@ if [ -d /usr/local/share/man ]; then
 	# wrong /usr/local/man symlink
 	# only delete the content
 	rm -rf /usr/local/share/man/*
-fi
-
-if [ -f /usr/local/lib/libcrypt.so.1 ]; then
-	# Remove libcrypt to only use installed libxcrypt instead
-	find /lib* /usr/lib* \( -name 'libcrypt.a' -o -name 'libcrypt.so' -o -name 'libcrypt.so.*' -o -name 'libcrypt-2.*.so' \) -delete
 fi
 
 if [ "${BASE_POLICY}" == "musllinux" ]; then

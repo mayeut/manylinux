@@ -225,8 +225,7 @@ class TestModules(unittest.TestCase):
         cxx = config_vars["CXX"]
         pthread = (
             " -pthread"
-            if os.environ["AUDITWHEEL_POLICY"]
-            in {"manylinux2014", "manylinux_2_28", "manylinux_2_31"}
+            if os.environ["AUDITWHEEL_POLICY"] in {"manylinux_2_28", "manylinux_2_31"}
             else ""
         )
         ldshared = f"{cc} -shared"

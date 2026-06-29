@@ -15,15 +15,7 @@ source "${MY_DIR}/build_utils.sh"
 # make sure the corresponding library is added to RUNTIME_DEPS if applicable
 
 if [ "${OS_ID_LIKE}" = "rhel" ]; then
-	COMPILE_DEPS=(bzip2-devel ncurses-devel readline-devel gdbm-devel xz-devel openssl openssl-devel curl-devel uuid-devel libffi-devel kernel-headers perl-IPC-Cmd)
-	if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ]; then
-		COMPILE_DEPS+=(libXft-devel)
-		COMPILE_DEPS+=(keyutils-libs-devel krb5-devel libcom_err-devel libidn-devel)  # we rebuild curl
-	elif [ "${AUDITWHEEL_POLICY}" == "manylinux_2_28" ]; then
-		COMPILE_DEPS+=(tk-devel)
-	else
-		COMPILE_DEPS+=(tk-devel)
-	fi
+	COMPILE_DEPS=(bzip2-devel ncurses-devel readline-devel gdbm-devel xz-devel openssl openssl-devel curl-devel uuid-devel libffi-devel kernel-headers perl-IPC-Cmd tk-devel)
 elif [ "${OS_ID_LIKE}" == "debian" ]; then
 	COMPILE_DEPS=(libbz2-dev libncurses-dev libreadline-dev tk-dev libgdbm-dev libdb-dev liblzma-dev openssl libssl-dev libcurl4-openssl-dev uuid-dev libffi-dev linux-headers-generic)
 elif [ "${OS_ID_LIKE}" == "alpine" ]; then

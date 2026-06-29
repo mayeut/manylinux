@@ -38,7 +38,7 @@ cp -rlf /manylinux-rootfs/* /manylinux-buildfs/
 mkdir -p /manylinux-buildfs/usr/local/lib/pkgconfig/
 ln -s ${PREFIX}/lib/pkgconfig/sqlite3.pc /manylinux-buildfs/usr/local/lib/pkgconfig/sqlite3.pc
 
-if [ "${AUDITWHEEL_POLICY}" == "manylinux2014" ] || [ "${AUDITWHEEL_POLICY}" == "manylinux_2_28" ] || [ "${AUDITWHEEL_POLICY}" == "musllinux_1_2" ]; then
+if [ "${AUDITWHEEL_POLICY}" == "manylinux_2_28" ] || [ "${AUDITWHEEL_POLICY}" == "musllinux_1_2" ]; then
 	# we still expose our custom libsqlite3 for dev in runtime images
 	mkdir -p /manylinux-rootfs/usr/local/lib/pkgconfig/
 	ln -s ${PREFIX}/lib/pkgconfig/sqlite3.pc /manylinux-rootfs/usr/local/lib/pkgconfig/sqlite3.pc
