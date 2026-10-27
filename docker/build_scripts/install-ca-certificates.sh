@@ -57,7 +57,6 @@ function manylinux_pkg_update {
 EOL=0
 case "${AUDITWHEEL_POLICY}" in
 	manylinux_2_28) MIN_VERSION="2026.2.92_v9.0.319-81.3.el8_10";;
-	manylinux_2_31) MIN_VERSION="20240203~20.04.1"; EOL=1;;
 	manylinux_2_34) MIN_VERSION="2026.2.92_v9.0.319-90.3.el9_8";;
 	manylinux_2_35) MIN_VERSION="20260816ubuntu0.22.04.1";;
 	manylinux_2_38) MIN_VERSION="2024.2.69_v8.0.303-4.an23";;

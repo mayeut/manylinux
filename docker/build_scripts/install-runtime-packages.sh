@@ -52,12 +52,7 @@ if [ "${OS_ID_LIKE}" == "rhel" ]; then
 		RUNTIME_DEPS+=(libxcrypt-compat)
 	fi
 elif [ "${OS_ID_LIKE}" == "debian" ]; then
-  RUNTIME_DEPS=(zlib1g libbz2-1.0 libexpat1 libncurses6 libreadline8 tk libgdbm6 libdb5.3 liblzma5 libcurl4 uuid)
-  if [ "${AUDITWHEEL_POLICY}" == "manylinux_2_31" ]; then
-  	RUNTIME_DEPS+=(libffi7 libssl1.1)
-  else
-  	RUNTIME_DEPS+=(libffi8 libssl3)
-  fi
+  RUNTIME_DEPS=(zlib1g libbz2-1.0 libexpat1 libffi8 libncurses6 libreadline8 tk libgdbm6 libdb5.3 libssl3 liblzma5 libcurl4 uuid)
 elif [ "${OS_ID_LIKE}" == "alpine" ]; then
 	RUNTIME_DEPS=(zlib bzip2 expat ncurses-libs readline tk gdbm xz openssl libcurl libuuid libffi)
 else

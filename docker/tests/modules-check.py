@@ -223,11 +223,7 @@ class TestModules(unittest.TestCase):
         config_vars = sysconfig.get_config_vars()
         cc = config_vars["CC"]
         cxx = config_vars["CXX"]
-        pthread = (
-            " -pthread"
-            if os.environ["AUDITWHEEL_POLICY"] in {"manylinux_2_28", "manylinux_2_31"}
-            else ""
-        )
+        pthread = " -pthread" if os.environ["AUDITWHEEL_POLICY"] == "manylinux_2_28" else ""
         ldshared = f"{cc} -shared"
         ldcxxshared = f"{cxx} -shared"
         if os.environ["AUDITWHEEL_POLICY"] == "musllinux_1_2" and sys.version_info[:2] >= (3, 14):

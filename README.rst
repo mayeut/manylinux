@@ -34,8 +34,6 @@ The manylinux project supports:
 
 - ``manylinux_2_28`` images for ``x86_64``, ``i686``, ``aarch64``, ``ppc64le`` and ``s390x``.
 
-- ``manylinux_2_31`` images for ``armv7l``.
-
 - ``manylinux_2_34`` images for ``x86_64``, ``i686``, ``aarch64``, ``ppc64le`` and ``s390x``.
 
 - ``manylinux_2_35`` images for ``armv7l``.
@@ -172,8 +170,8 @@ distros using glibc 2.34 or later, including:
 - CentOS/RHEL 9+
 
 
-manylinux_2_31 (Ubuntu 20.04 based) - armv7l only
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+manylinux_2_31 (Ubuntu 20.04 based) - armv7l only - EOL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Caveat:
 
