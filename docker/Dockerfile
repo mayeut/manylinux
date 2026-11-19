@@ -183,6 +183,16 @@ ARG MANYLINUX_DISABLE_CLANG_FOR_CPYTHON
 RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
     /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/build-cpython.sh hugo@python.org https://github.com/login/oauth 3.15.2 nogil
 
+FROM build_cpython AS build_cpython316
+ARG MANYLINUX_DISABLE_CLANG_FOR_CPYTHON
+RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/build-cpython.sh savannah@python.org https://github.com/login/oauth 3.16.0a2
+
+FROM build_cpython AS build_cpython316_nogil
+ARG MANYLINUX_DISABLE_CLANG_FOR_CPYTHON
+RUN --mount=type=bind,from=static_clang,target=/tmp/cross-compiler,ro \
+    /tmp/cross-compiler/entrypoint /opt/_internal/build_scripts/build-cpython.sh savannah@python.org https://github.com/login/oauth 3.16.0a2 nogil
+
 
 FROM runtime_base
 COPY --from=build_mpdecimal /manylinux-rootfs /
@@ -199,10 +209,11 @@ RUN --mount=type=bind,target=/build_cpython39,from=build_cpython39 \
     --mount=type=bind,target=/build_cpython314_nogil,from=build_cpython314_nogil \
     --mount=type=bind,target=/build_cpython315,from=build_cpython315 \
     --mount=type=bind,target=/build_cpython315_nogil,from=build_cpython315_nogil \
+    --mount=type=bind,target=/build_cpython316,from=build_cpython316 \
+    --mount=type=bind,target=/build_cpython316_nogil,from=build_cpython316_nogil \
     mkdir -p /opt/_internal && \
     cp -rf /build_cpython*/opt/_internal/cpython* /opt/_internal/ && \
     manylinux-entrypoint /opt/_internal/build_scripts/finalize.sh \
-      pp311-pypy311_pp73 \
       pp311-pypy311_pp80 \
       pp312-pypy312_pp80
 

@@ -43,7 +43,7 @@ def update_python_dependencies(session):
     packages_req.write_text("\n".join(packages) + "\n")
     pip_req = tmp / "pip.in"
     pip_req.write_text("pip\n")
-    for python_minor in range(9, 16):
+    for python_minor in range(9, 17):
         python_version = f"3.{python_minor}"
         pip_compile(python_version, packages_req, f"{python_version}/packages.txt")
         pip_compile(python_version, pip_req, f"{python_version}/pip.txt")
